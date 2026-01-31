@@ -2,9 +2,13 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Auth from './pages/Auth';
 import ForgotPassword from './pages/ForgotPassword';
-import Dashboard from './pages/Dashboard';
 import Landing from './pages/Landing';
 import Navbar from './components/Navbar';
+import Layout from './components/Layout';
+import DashboardPage from './pages/Dashboard';
+import StatisticsPage from './pages/StatisticsPage';
+import SettingsPage from './pages/SettingsPage';
+import ArchivePage from './pages/ArchivePage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -47,7 +51,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {user && <Navbar />}
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route 
@@ -58,6 +61,7 @@ function App() {
             </PublicRoute>
           } 
         />
+        {/* Public routes */}
         <Route 
           path="/login" 
           element={
@@ -82,13 +86,25 @@ function App() {
             </PublicRoute>
           } 
         />
+
+        {/* Protected routes with Sidebar Layout */}
         <Route 
-          path="/dashboard" 
+          path="/*"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/statistics" element={<StatisticsPage />} />
+                  <Route path="/archive" element={<ArchivePage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  {/* Redirect unknown routes to dashboard */}
+                  <Route path="*" element={<Navigate to="/dashboard" />} />
+                </Routes>
+              </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
@@ -97,4 +113,3 @@ function App() {
 }
 
 export default App;
-
