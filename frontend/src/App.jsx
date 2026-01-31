@@ -3,8 +3,12 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
-import Dashboard from './pages/Dashboard';
-import Navbar from './components/Navbar';
+
+import Layout from './components/Layout';
+import DashboardPage from './pages/Dashboard';
+import StatisticsPage from './pages/StatisticsPage';
+import SettingsPage from './pages/SettingsPage';
+import ArchivePage from './pages/ArchivePage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -47,8 +51,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {user && <Navbar />}
       <Routes>
+        {/* Public routes */}
         <Route 
           path="/login" 
           element={
@@ -73,20 +77,29 @@ function App() {
             </PublicRoute>
           } 
         />
+
+        {/* Protected routes with Sidebar Layout */}
         <Route 
-          path="/dashboard" 
+          path="/*"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/statistics" element={<StatisticsPage />} />
+                  <Route path="/archive" element={<ArchivePage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  {/* Redirect unknown routes to dashboard */}
+                  <Route path="*" element={<Navigate to="/dashboard" />} />
+                </Routes>
+              </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </div>
   );
 }
 
 export default App;
-
