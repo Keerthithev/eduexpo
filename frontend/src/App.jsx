@@ -94,7 +94,6 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Routes>
-                  <Route path="/" element={<DashboardPage />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/statistics" element={<StatisticsPage />} />
                   <Route path="/archive" element={<ArchivePage />} />

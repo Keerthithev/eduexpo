@@ -4,7 +4,7 @@ const Layout = ({ children }) => {
   const location = useLocation();
   
   const menuItems = [
-    { name: 'Dashboard', path: '/' },
+    { name: 'Dashboard', path: '/dashboard' },
     { name: 'Statistics', path: '/statistics' },
     { name: 'Archive', path: '/archive' },
     { name: 'Settings', path: '/settings' },
