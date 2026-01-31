@@ -132,6 +132,7 @@ const SettingsPage = () => {
             value={profileForm.name}
             onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
             required
+            disabled
           />
           <input
             type="email"
@@ -140,8 +141,8 @@ const SettingsPage = () => {
             value={profileForm.email}
             onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
             required
+            disabled
           />
-          <button type="submit" className="btn btn-primary">Update Profile</button>
         </form>
       </div>
 
