@@ -47,7 +47,7 @@ const Layout = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 overflow-auto">{children}</main>
+      <main className="flex-1 p-4 overflow-auto">{children}</main>
     </div>
   );
 };

@@ -200,8 +200,8 @@ const Dashboard = () => {
                   )}
                   {topic.description && <p className="text-sm text-gray-600">{topic.description}</p>}
                   <div className="text-xs mt-1 flex gap-2">
-                    <span>Start: {topic.startDate ? dayjs(topic.startDate).format('DD MMM') : '—'}</span>
-                    <span>End: <span className={isLate ? 'text-red-600' : ''}>{topic.endDate ? dayjs(topic.endDate).format('DD MMM') : '—'}</span></span>
+                    {/* <span>Start: {topic.startDate ? dayjs(topic.startDate).format('DD MMM') : '—'}</span>
+                    <span>End: <span className={isLate ? 'text-red-600' : ''}>{topic.endDate ? dayjs(topic.endDate).format('DD MMM') : '—'}</span></span> */}
                   </div>
                   <div className="w-full bg-gray-200 h-2 rounded mt-2">
                     <div className="bg-blue-500 h-2 rounded" style={{ width: `${topicProgress}%` }}></div>
