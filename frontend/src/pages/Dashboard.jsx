@@ -9,11 +9,9 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Goal form state
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [goalForm, setGoalForm] = useState({ title: '', description: '' });
 
-  // Topic form state
   const [showTopicForm, setShowTopicForm] = useState(false);
   const [topicForm, setTopicForm] = useState({
     name: '',
@@ -22,13 +20,10 @@ const Dashboard = () => {
     endDate: ''
   });
 
-  // Edit states
   const [editingGoal, setEditingGoal] = useState(false);
   const [editingTopic, setEditingTopic] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
