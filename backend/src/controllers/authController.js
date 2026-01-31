@@ -17,6 +17,7 @@ const generateToken = (id) => {
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    console.log('Register payload:', req.body);
 
     // Check if user exists
     const existingUser = await User.findOne({ email });
@@ -26,13 +27,19 @@ export const register = async (req, res) => {
 
     // Create user
     const user = await User.create({ name, email, password });
+    console.log('User created:', user._id);
 
-    // Create default goal for user
-    await Goal.create({
-      user: user._id,
-      title: 'My Learning Goal',
-      description: 'Start tracking your learning journey'
-    });
+    // Create default goal safely
+    try {
+      await Goal.create({
+        user: user._id,
+        title: 'My Learning Goal',
+        description: 'Start tracking your learning journey'
+      });
+      console.log('Default goal created for user:', user._id);
+    } catch (goalError) {
+      console.error('Goal creation failed:', goalError.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -44,7 +51,7 @@ export const register = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('REGISTER ERROR:', error.message);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -56,18 +63,15 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
     }
 
-    // Check for user
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Check password
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -76,14 +80,10 @@ export const login = async (req, res) => {
     res.json({
       success: true,
       token: generateToken(user._id),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
-      }
+      user: { id: user._id, name: user.name, email: user.email }
     });
   } catch (error) {
-    console.error(error);
+    console.error('LOGIN ERROR:', error.message);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -94,29 +94,25 @@ export const login = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-
     const user = await User.findOne({ email });
+
     if (!user) {
-      // Don't reveal if user exists
       return res.json({ success: true, message: 'If an account exists, a password reset link will be sent' });
     }
 
-    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     user.resetPasswordExpire = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    // For MVP, just return the reset token (in production, send via email)
     res.json({
       success: true,
       message: 'Password reset link generated',
-      resetToken: resetToken,
-      // For development: include the hashed token for verification
+      resetToken,
       resetUrl: `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
     });
   } catch (error) {
-    console.error(error);
+    console.error('FORGOT PASSWORD ERROR:', error.message);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -129,9 +125,7 @@ export const resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    // Hash token and find user
     const resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
-
     const user = await User.findOne({
       resetPasswordToken,
       resetPasswordExpire: { $gt: Date.now() }
@@ -141,18 +135,14 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
     }
 
-    // Set new password
     user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
 
-    res.json({
-      success: true,
-      message: 'Password reset successful'
-    });
+    res.json({ success: true, message: 'Password reset successful' });
   } catch (error) {
-    console.error(error);
+    console.error('RESET PASSWORD ERROR:', error.message);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -162,11 +152,14 @@ export const resetPassword = async (req, res) => {
 // @access  Private
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    // Optionally populate goals for frontend
+    const user = await User.findById(req.user.id)
+      .select('-password')
+      .lean();
+
     res.json({ success: true, user });
   } catch (error) {
-    console.error(error);
+    console.error('GET ME ERROR:', error.message);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
-
