@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import dayjs from 'dayjs';
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [goal, setGoal] = useState(null);
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +108,14 @@ const Dashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* Welcome Message */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
+        <h1 className="text-2xl font-bold">
+          Welcome back, {user?.name || 'User'}! 👋
+        </h1>
+        <p className="mt-1 opacity-90">Ready to continue your learning journey today?</p>
+      </div>
+
       {/* Alerts */}
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
