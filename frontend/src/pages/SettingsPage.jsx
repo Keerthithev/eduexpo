@@ -188,14 +188,6 @@ const SettingsPage = () => {
         </form>
       </div>
 
-      {/* Preferences */}
-      <div className="card p-6">
-        <h2 className="text-xl font-bold mb-4">Preferences</h2>
-        <div className="flex items-center gap-3">
-          <input type="checkbox" id="darkMode" className="cursor-pointer" />
-          <label htmlFor="darkMode">Enable Dark Mode</label>
-        </div>
-      </div>
 
       {/* Account Actions */}
       <div className="card p-6">

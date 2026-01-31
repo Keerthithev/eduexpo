@@ -13,29 +13,19 @@ const Dashboard = () => {
   const [goalForm, setGoalForm] = useState({ title: '', description: '' });
 
   const [showTopicForm, setShowTopicForm] = useState(false);
-  const [topicForm, setTopicForm] = useState({
-    name: '',
-    description: '',
-    startDate: '',
-    endDate: ''
-  });
+  const [topicForm, setTopicForm] = useState({ name: '', description: '', startDate: '', endDate: '' });
 
-  const [editingGoal, setEditingGoal] = useState(false);
   const [editingTopic, setEditingTopic] = useState(null);
 
+  // Fetch goal and topics
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
       const [goalRes, topicsRes] = await Promise.all([api.get('/goal'), api.get('/topic')]);
       setGoal(goalRes.data.goal);
-      setTopics(topicsRes.data.topics);
-      if (goalRes.data.goal) {
-        setGoalForm({
-          title: goalRes.data.goal.title,
-          description: goalRes.data.goal.description || ''
-        });
-      }
+      setTopics(topicsRes.data.topics || []);
+      if (goalRes.data.goal) setGoalForm({ title: goalRes.data.goal.title, description: goalRes.data.goal.description || '' });
     } catch {
       setError('Failed to load data');
     } finally {
@@ -43,25 +33,24 @@ const Dashboard = () => {
     }
   };
 
+  // Goal update
   const handleUpdateGoal = async (e) => {
-    e.preventDefault();
-    setError(''); setSuccess('');
+    e.preventDefault(); setError(''); setSuccess('');
     try {
       const res = await api.put('/goal', goalForm);
       setGoal(res.data.goal);
-      setSuccess('Goal updated successfully');
-      setEditingGoal(false); setShowGoalForm(false);
+      setSuccess('Goal updated successfully'); setShowGoalForm(false);
     } catch {
       setError('Failed to update goal');
     }
   };
 
+  // Add topic
   const handleAddTopic = async (e) => {
-    e.preventDefault();
-    setError(''); setSuccess('');
+    e.preventDefault(); setError(''); setSuccess('');
     try {
       const res = await api.post('/topic', { ...topicForm, goalId: goal._id });
-      setTopics([res.data.topic, ...topics]);
+      setTopics(prev => [res.data.topic, ...prev]); // prepend new topic
       setTopicForm({ name: '', description: '', startDate: '', endDate: '' });
       setShowTopicForm(false);
       setSuccess('Topic added successfully');
@@ -70,30 +59,33 @@ const Dashboard = () => {
     }
   };
 
-  const handleToggleTopic = async (topicId) => {
+  // Toggle complete/pending
+  const handleToggleTopic = async (id) => {
     try {
-      const res = await api.put(`/topic/${topicId}/toggle`);
-      setTopics(topics.map(t => t._id === topicId ? res.data.topic : t));
+      const res = await api.put(`/topic/${id}/toggle`);
+      setTopics(prev => prev.map(t => t._id === id ? res.data.topic : t));
     } catch {
       setError('Failed to update topic');
     }
   };
 
-  const handleDeleteTopic = async (topicId) => {
+  // Delete topic
+  const handleDeleteTopic = async (id) => {
     if (!window.confirm('Are you sure you want to delete this topic?')) return;
     try {
-      await api.delete(`/topic/${topicId}`);
-      setTopics(topics.filter(t => t._id !== topicId));
+      await api.delete(`/topic/${id}`);
+      setTopics(prev => prev.filter(t => t._id !== id));
       setSuccess('Topic deleted');
     } catch {
       setError('Failed to delete topic');
     }
   };
 
-  const handleUpdateTopic = async (topicId, updated) => {
+  // Update topic (inline)
+  const handleUpdateTopic = async (id, updated) => {
     try {
-      const res = await api.put(`/topic/${topicId}`, updated);
-      setTopics(topics.map(t => t._id === topicId ? res.data.topic : t));
+      const res = await api.put(`/topic/${id}`, updated);
+      setTopics(prev => prev.map(t => t._id === id ? res.data.topic : t));
       setEditingTopic(null);
     } catch {
       setError('Failed to update topic');
@@ -103,7 +95,8 @@ const Dashboard = () => {
   // Statistics
   const totalTopics = topics.length;
   const completedTopics = topics.filter(t => t.status === 'completed').length;
-  const progress = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+  const pendingTopics = totalTopics - completedTopics;
+  const progress = totalTopics ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -112,54 +105,55 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Alerts */}
-      {error && <div className="mb-4 alert alert-error">{error}</div>}
-      {success && <div className="mb-4 alert alert-success">{success}</div>}
+      {error && <div className="alert alert-error">{error}</div>}
+      {success && <div className="alert alert-success">{success}</div>}
 
       {/* Goal */}
-      <div className="card mb-8 p-6">
+      <div className="card p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">My Learning Goal</h2>
-            {goal && <p className="text-gray-600 mt-2">{goal.title}</p>}
-            {goal?.description && <p className="text-gray-500 mt-1">{goal.description}</p>}
+            <h2 className="text-2xl font-bold">My Learning Goal</h2>
+            {goal && <p className="mt-2 text-gray-700">{goal.title}</p>}
+            {goal?.description && <p className="mt-1 text-gray-500">{goal.description}</p>}
           </div>
-          <button
-            onClick={() => { setEditingGoal(!editingGoal); setShowGoalForm(!showGoalForm); }}
-            className="btn btn-secondary text-sm"
-          >
-            {editingGoal ? 'Cancel' : 'Edit Goal'}
+          <button className="btn btn-secondary text-sm" onClick={() => setShowGoalForm(!showGoalForm)}>
+            {showGoalForm ? 'Cancel' : 'Edit Goal'}
           </button>
         </div>
-
         {showGoalForm && (
-          <form onSubmit={handleUpdateGoal} className="space-y-4 pt-4 border-t">
-            <input
-              type="text" className="input" placeholder="Goal title"
-              value={goalForm.title} onChange={e => setGoalForm({ ...goalForm, title: e.target.value })}
-              required
-            />
-            <textarea
-              className="input" rows={3} placeholder="Goal description"
-              value={goalForm.description} onChange={e => setGoalForm({ ...goalForm, description: e.target.value })}
-            />
+          <form onSubmit={handleUpdateGoal} className="space-y-3 pt-3 border-t">
+            <input type="text" className="input" value={goalForm.title} onChange={e => setGoalForm({ ...goalForm, title: e.target.value })} required placeholder="Goal Title" />
+            <textarea className="input" rows={3} value={goalForm.description} onChange={e => setGoalForm({ ...goalForm, description: e.target.value })} placeholder="Description" />
             <button type="submit" className="btn btn-primary">Save Goal</button>
           </form>
         )}
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-        <div className="card text-center p-4"><div className="text-3xl font-bold text-blue-600">{totalTopics}</div><div>Total Topics</div></div>
-        <div className="card text-center p-4"><div className="text-3xl font-bold text-green-600">{completedTopics}</div><div>Completed</div></div>
-        <div className="card text-center p-4"><div className="text-3xl font-bold text-yellow-600">{totalTopics - completedTopics}</div><div>Pending</div></div>
-        <div className="card text-center p-4"><div className="text-3xl font-bold text-purple-600">{progress}%</div><div>Progress</div></div>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="card text-center p-4">
+          <div className="text-3xl font-bold text-blue-600">{totalTopics}</div>
+          <div>Total Topics</div>
+        </div>
+        <div className="card text-center p-4">
+          <div className="text-3xl font-bold text-green-600">{completedTopics}</div>
+          <div>Completed</div>
+        </div>
+        <div className="card text-center p-4">
+          <div className="text-3xl font-bold text-yellow-600">{pendingTopics}</div>
+          <div>Pending</div>
+        </div>
+        <div className="card text-center p-4">
+          <div className="text-3xl font-bold text-purple-600">{progress}%</div>
+          <div>Progress</div>
+        </div>
       </div>
 
       {/* Add Topic */}
-      <div className="card mb-6 p-4">
-        <div className="flex justify-between items-center mb-4">
+      <div className="card p-4">
+        <div className="flex justify-between items-center mb-3">
           <h3 className="text-xl font-bold">My Topics</h3>
           <button className="btn btn-primary text-sm" onClick={() => setShowTopicForm(!showTopicForm)}>
             {showTopicForm ? 'Cancel' : '+ Add Topic'}
@@ -167,10 +161,8 @@ const Dashboard = () => {
         </div>
         {showTopicForm && (
           <form onSubmit={handleAddTopic} className="space-y-2">
-            <input type="text" className="input" placeholder="Topic name"
-              value={topicForm.name} onChange={e => setTopicForm({ ...topicForm, name: e.target.value })} required />
-            <textarea className="input" rows={2} placeholder="Description"
-              value={topicForm.description} onChange={e => setTopicForm({ ...topicForm, description: e.target.value })} />
+            <input type="text" className="input" value={topicForm.name} onChange={e => setTopicForm({ ...topicForm, name: e.target.value })} placeholder="Topic Name" required />
+            <textarea className="input" rows={2} value={topicForm.description} onChange={e => setTopicForm({ ...topicForm, description: e.target.value })} placeholder="Description" />
             <div className="flex gap-2">
               <input type="date" className="input flex-1" value={topicForm.startDate} onChange={e => setTopicForm({ ...topicForm, startDate: e.target.value })} />
               <input type="date" className="input flex-1" value={topicForm.endDate} onChange={e => setTopicForm({ ...topicForm, endDate: e.target.value })} />
@@ -180,7 +172,7 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Topics Cards */}
+      {/* Topics List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {topics.length === 0 ? (
           <p className="text-center text-gray-500">No topics added yet</p>
@@ -188,12 +180,24 @@ const Dashboard = () => {
           const today = dayjs();
           const end = dayjs(topic.endDate);
           const isLate = end.isBefore(today) && topic.status !== 'completed';
-          const topicProgress = topic.progress || (topic.status === 'completed' ? 100 : 0);
+          const topicProgress = topic.progress ?? (topic.status === 'completed' ? 100 : 0);
+
           return (
-            <div key={topic._id} className={`card p-4 border ${topic.status === 'completed' ? 'bg-green-50' : 'bg-white'} relative`}>
+            <div key={topic._id} className={`card p-4 border ${topic.status === 'completed' ? 'bg-green-50' : 'bg-white'}`}>
               <div className="flex justify-between items-start">
-                <div>
-                  <h4 className={`font-bold ${topic.status === 'completed' ? 'line-through text-gray-500' : ''}`}>{topic.name}</h4>
+                <div className="flex-1">
+                  {editingTopic === topic._id ? (
+                    <input
+                      type="text"
+                      className="input w-full mb-1"
+                      defaultValue={topic.name}
+                      onBlur={e => handleUpdateTopic(topic._id, { ...topic, name: e.target.value })}
+                      onKeyDown={e => { if (e.key === 'Enter') handleUpdateTopic(topic._id, { ...topic, name: e.target.value }); }}
+                      autoFocus
+                    />
+                  ) : (
+                    <h4 className={`font-bold ${topic.status === 'completed' ? 'line-through text-gray-500' : ''}`} onClick={() => setEditingTopic(topic._id)}>{topic.name}</h4>
+                  )}
                   {topic.description && <p className="text-sm text-gray-600">{topic.description}</p>}
                   <div className="text-xs mt-1 flex gap-2">
                     <span>Start: {topic.startDate ? dayjs(topic.startDate).format('DD MMM') : '—'}</span>
@@ -203,10 +207,9 @@ const Dashboard = () => {
                     <div className="bg-blue-500 h-2 rounded" style={{ width: `${topicProgress}%` }}></div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col items-end gap-2 ml-2">
                   <input type="checkbox" checked={topic.status === 'completed'} onChange={() => handleToggleTopic(topic._id)} className="h-5 w-5 cursor-pointer" />
-                  <button onClick={() => setEditingTopic(topic._id)} className="text-blue-600">Edit</button>
-                  <button onClick={() => handleDeleteTopic(topic._id)} className="text-red-600">Delete</button>
+                  <button className="text-red-600 text-sm" onClick={() => handleDeleteTopic(topic._id)}>Delete</button>
                 </div>
               </div>
             </div>
