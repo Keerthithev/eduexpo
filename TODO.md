@@ -12,7 +12,8 @@
 - [x] 7. Update Register.jsx - Step 2: OTP verification
 - [x] 8. Update Register.jsx - Step 3: Password + Confirm Password
 - [x] 9. Update progress indicator to show 3 steps
-
-## Testing
-- [ ] 10. Test the complete registration flow
+- [x] 10. Login page UI/UX improvements with self-learning image
+- [x] 11. Create unified Auth page with smooth swipe animations (removed animation per feedback)
+- [x] 12. Match ForgotPassword theme with Auth page
+- [x] 13. Create professional Landing page for http://localhost:5173/
 
