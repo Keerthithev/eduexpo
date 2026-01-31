@@ -19,11 +19,13 @@ app.use(express.json());
 import authRoutes from './routes/auth.js';
 import goalRoutes from './routes/goal.js';
 import topicRoutes from './routes/topic.js';
+import userRoutes from './routes/user.js';
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/goal', goalRoutes);
 app.use('/api/topic', topicRoutes);
+app.use('/api/user', userRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

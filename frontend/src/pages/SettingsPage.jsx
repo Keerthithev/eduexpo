@@ -3,44 +3,46 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const SettingsPage = () => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   // Profile state
-  const [profileForm, setProfileForm] = useState({
-    name: '',
-    email: ''
-  });
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
+  const [profileForm, setProfileForm] = useState({ name: '', email: '' });
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
   // Goal state
-  const [goalForm, setGoalForm] = useState({
-    title: '',
-    description: ''
-  });
+  const [goalForm, setGoalForm] = useState({ title: '', description: '' });
+  const [goalId, setGoalId] = useState(null); // store goal ID for updates
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  // Auto-clear messages
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+        setError('');
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
+
   const fetchData = async () => {
     try {
+      // Fetch profile
       const res = await api.get('/user/me');
-      setProfileForm({
-        name: res.data.name,
-        email: res.data.email
-      });
+      setProfileForm({ name: res.data.name, email: res.data.email });
+
+      // Fetch goal
       const goalRes = await api.get('/goal');
-      setGoalForm({
-        title: goalRes.data.goal?.title || '',
-        description: goalRes.data.goal?.description || ''
-      });
+      if (goalRes.data.goal) {
+        setGoalId(goalRes.data.goal._id);
+        setGoalForm({ title: goalRes.data.goal.title, description: goalRes.data.goal.description || '' });
+      }
     } catch {
       setError('Failed to load settings');
     } finally {
@@ -81,8 +83,18 @@ const SettingsPage = () => {
     e.preventDefault();
     setError(''); setSuccess('');
     try {
-      await api.put('/goal', goalForm);
-      setSuccess('Learning goal updated successfully');
+      if (goalId) {
+        // Update existing goal
+        const res = await api.put('/goal', goalForm);
+        setGoalForm({ title: res.data.goal.title, description: res.data.goal.description || '' });
+        setSuccess('Learning goal updated successfully');
+      } else {
+        // Create a new goal if none exists
+        const res = await api.post('/goal', goalForm);
+        setGoalId(res.data.goal._id);
+        setGoalForm({ title: res.data.goal.title, description: res.data.goal.description || '' });
+        setSuccess('Learning goal created successfully');
+      }
     } catch {
       setError('Failed to update goal');
     }
@@ -184,10 +196,11 @@ const SettingsPage = () => {
             value={goalForm.description}
             onChange={e => setGoalForm({ ...goalForm, description: e.target.value })}
           />
-          <button type="submit" className="btn btn-primary">Update Goal</button>
+          <button type="submit" className="btn btn-primary">
+            {goalId ? 'Update Goal' : 'Create Goal'}
+          </button>
         </form>
       </div>
-
 
       {/* Account Actions */}
       <div className="card p-6">
