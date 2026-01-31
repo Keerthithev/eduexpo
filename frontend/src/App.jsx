@@ -1,9 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Auth from './pages/Auth';
 import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
+import Landing from './pages/Landing';
 import Navbar from './components/Navbar';
 
 const ProtectedRoute = ({ children }) => {
@@ -49,11 +49,20 @@ function App() {
     <div className="min-h-screen bg-gray-50">
       {user && <Navbar />}
       <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route 
+          path="/auth" 
+          element={
+            <PublicRoute>
+              <Auth />
+            </PublicRoute>
+          } 
+        />
         <Route 
           path="/login" 
           element={
             <PublicRoute>
-              <Login />
+              <Auth />
             </PublicRoute>
           } 
         />
@@ -61,7 +70,7 @@ function App() {
           path="/register" 
           element={
             <PublicRoute>
-              <Register />
+              <Auth />
             </PublicRoute>
           } 
         />
@@ -81,8 +90,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
   );
